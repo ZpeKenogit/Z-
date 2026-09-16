@@ -52,7 +52,7 @@ ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Colors Palette (Cyber Glow Theme)
+-- Colors Palette
 local C_BG = Color3.fromRGB(11, 15, 25)
 local C_PANEL = Color3.fromRGB(15, 23, 38)
 local C_SIDEBAR = Color3.fromRGB(10, 17, 28)
@@ -61,7 +61,7 @@ local C_TEXT = Color3.fromRGB(240, 245, 255)
 local C_TEXT_DARK = Color3.fromRGB(100, 116, 139)
 local C_CARD = Color3.fromRGB(20, 30, 48)
 
--- Main Frame (Window)
+-- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 680, 0, 420)
@@ -79,7 +79,7 @@ local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = C_ACCENT
 MainStroke.Thickness = 1.5
 
--- UIScale for Responsiveness
+-- UIScale
 local UIScale = Instance.new("UIScale", MainFrame)
 local function AutoScale()
     local vp = Camera.ViewportSize
@@ -92,7 +92,7 @@ end
 AutoScale()
 Camera:GetPropertyChangedSignal("ViewportSize"):Connect(AutoScale)
 
--- Top Header
+-- Header
 local Header = Instance.new("Frame", MainFrame)
 Header.Name = "Header"
 Header.Size = UDim2.new(1, 0, 0, 45)
@@ -159,10 +159,6 @@ Sidebar.BorderSizePixel = 0
 local SidebarCorner = Instance.new("UICorner", Sidebar)
 SidebarCorner.CornerRadius = UDim.new(0, 10)
 
--- Sidebar Buttons Generator
-local TabButtons = {}
-local TabFrames = {}
-
 local function CreateSidebarTab(name, iconText, yPos)
     local btn = Instance.new("TextButton", Sidebar)
     btn.Size = UDim2.new(1, 0, 0, 50)
@@ -181,7 +177,7 @@ local NavAimbot = CreateSidebarTab("Aimbot", "🎯", 10)
 local NavVisual = CreateSidebarTab("Visual", "👁️", 65)
 local NavOther = CreateSidebarTab("Other", "⚙️", 120)
 
--- Top Navigation Bar
+-- Top Navigation
 local TopNav = Instance.new("Frame", MainFrame)
 TopNav.Size = UDim2.new(1, -70, 0, 40)
 TopNav.Position = UDim2.new(0, 65, 0, 50)
@@ -216,7 +212,7 @@ local BtnTab1, Stroke1 = CreateTopNavBtn("AIMBOT", "🎯")
 local BtnTab2, Stroke2 = CreateTopNavBtn("VISUAL", "👁️")
 local BtnTab3, Stroke3 = CreateTopNavBtn("OTHER", "⚙️")
 
--- Container for Pages
+-- Container Pages
 local Container = Instance.new("Frame", MainFrame)
 Container.Size = UDim2.new(1, -75, 1, -100)
 Container.Position = UDim2.new(0, 65, 0, 95)
@@ -234,7 +230,6 @@ local PageAimbot = CreatePageFrame()
 local PageVisual = CreatePageFrame()
 local PageOther = CreatePageFrame()
 
--- Tab Switcher Logic
 local function SwitchTab(target)
     PageAimbot.Visible = (target == 1)
     PageVisual.Visible = (target == 2)
@@ -260,7 +255,7 @@ NavAimbot.MouseButton1Click:Connect(function() SwitchTab(1) end)
 NavVisual.MouseButton1Click:Connect(function() SwitchTab(2) end)
 NavOther.MouseButton1Click:Connect(function() SwitchTab(3) end)
 
--- UI Control Helper Functions
+-- Elements Builders
 local function CreateToggle(parent, title, desc, defaultVal, callback)
     local card = Instance.new("Frame", parent)
     card.Size = UDim2.new(1, 0, 0, 42)
@@ -387,9 +382,8 @@ local function BuildCardLayout(parentFrame)
     return left, right
 end
 
--- ==================== PAGE 1: AIMBOT ====================
+-- PAGE 1: AIMBOT
 local LeftAimbot, RightAimbot = BuildCardLayout(PageAimbot)
-
 CreateToggle(LeftAimbot, "Target Assist", "Auto lock and follow target.", Settings.Aimbot.TargetAssist, function(v) Settings.Aimbot.TargetAssist = v end)
 CreateSlider(LeftAimbot, "Target Distance", 100, 1000, Settings.Aimbot.TargetDistance, function(v) Settings.Aimbot.TargetDistance = v end)
 CreateSlider(LeftAimbot, "Prediction", 1, 100, Settings.Aimbot.Prediction, function(v) Settings.Aimbot.Prediction = v end)
@@ -412,9 +406,8 @@ AimText.Size = UDim2.new(1, -20, 0, 60)
 AimText.Position = UDim2.new(0, 10, 0.6, 0)
 AimText.BackgroundTransparency = 1
 
--- ==================== PAGE 2: VISUAL ====================
+-- PAGE 2: VISUAL
 local LeftVisual, RightVisual = BuildCardLayout(PageVisual)
-
 CreateToggle(LeftVisual, "Player Outline", "Show outline for valid players.", Settings.Visuals.PlayerOutline, function(v) Settings.Visuals.PlayerOutline = v end)
 CreateToggle(LeftVisual, "Health %", "Display player health percentage.", Settings.Visuals.HealthPercent, function(v) Settings.Visuals.HealthPercent = v end)
 CreateToggle(LeftVisual, "Distance", "Show distance to players.", Settings.Visuals.Distance, function(v) Settings.Visuals.Distance = v end)
@@ -437,9 +430,8 @@ VisText.Size = UDim2.new(1, -20, 0, 60)
 VisText.Position = UDim2.new(0, 10, 0.6, 0)
 VisText.BackgroundTransparency = 1
 
--- ==================== PAGE 3: OTHER ====================
+-- PAGE 3: OTHER
 local LeftOther, RightOther = BuildCardLayout(PageOther)
-
 CreateToggle(LeftOther, "Dash", "Increase dash distance/speed.", Settings.Other.Dash, function(v) Settings.Other.Dash = v end)
 CreateSlider(LeftOther, "Movement Speed", 16, 100, Settings.Other.MovementSpeed, function(v) Settings.Other.MovementSpeed = v end)
 CreateSlider(LeftOther, "Jump Height", 50, 200, Settings.Other.JumpHeight, function(v) Settings.Other.JumpHeight = v end)
@@ -461,10 +453,9 @@ OthText.Size = UDim2.new(1, -20, 0, 60)
 OthText.Position = UDim2.new(0, 10, 0.6, 0)
 OthText.BackgroundTransparency = 1
 
--- Open default tab
 SwitchTab(1)
 
--- ==================== MOBILE FLOATING BUTTON 'Z' ====================
+-- Mobile Button Z
 local MobileBtn = Instance.new("TextButton", ScreenGui)
 MobileBtn.Name = "ZpeKenoButtonZ"
 MobileBtn.Size = UDim2.new(0, 48, 0, 48)
@@ -494,21 +485,17 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- ==================== FUNCTIONAL FEATURES ENGINE ====================
-
--- Highlights & ESP Storage
+-- Main Loop Logic
 local Highlights = {}
 
 local function ClearVisuals()
-    for _, h in pairs(Highlights) do
-        if h then h:Destroy() end
+    for player, hl in pairs(Highlights) do
+        if hl then pcall(function() hl:Destroy() end) end
     end
     Highlights = {}
 end
 
--- ESP & Logic Loop
 RunService.RenderStepped:Connect(function()
-    -- Movement Loops
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         local hum = LocalPlayer.Character.Humanoid
         if Settings.Other.MovementSpeed > 16 then hum.WalkSpeed = Settings.Other.MovementSpeed end
@@ -517,7 +504,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Visual Highlights Engine
     if Settings.Visuals.PlayerOutline then
         for _, player in pairs(Players:GetPlayers()) do
             if player ~= LocalPlayer or not Settings.Visuals.ExcludeLocalPlayer then
@@ -526,4 +512,43 @@ RunService.RenderStepped:Connect(function()
                         local hl = Instance.new("Highlight")
                         hl.Name = "ZpeKenoESP"
                         hl.FillColor = Color3.fromRGB(0, 255, 120)
-                        
+                        hl.OutlineColor = Color3.fromRGB(0, 170, 255)
+                        hl.FillTransparency = 0.5
+                        hl.OutlineTransparency = 0
+                        hl.Adornee = player.Character
+                        hl.Parent = player.Character
+                        Highlights[player] = hl
+                    end
+                end
+            end
+        end
+    else
+        ClearVisuals()
+    end
+
+    if Settings.Aimbot.TargetAssist then
+        local closestTarget = nil
+        local shortestDist = Settings.Aimbot.TargetDistance
+
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local sameTeam = (player.Team ~= nil and player.Team == LocalPlayer.Team)
+                    if not (Settings.Aimbot.TeamFilter and sameTeam) then
+                        local targetPos = player.Character.HumanoidRootPart.Position
+                        local dist = (targetPos - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                        if dist < shortestDist then
+                            shortestDist = dist
+                            closestTarget = player.Character.HumanoidRootPart
+                        end
+                    end
+                end
+            end
+
+            if closestTarget then
+                local targetCFrame = CFrame.new(Camera.CFrame.Position, closestTarget.Position)
+                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, (Settings.Aimbot.Prediction / 100) * 0.2)
+            end
+        end
+    end
+end)
