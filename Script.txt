@@ -1,8 +1,9 @@
 --[[
     ========================================================================
-    ZpeKeno Hub - CUSTOM UI EDITION
-    Layout baseado nas imagens fornecidas (dark neon / glassmorphism)
-    Totalmente responsivo: PC, Mobile (vertical/horizontal) e Tablet
+    ZpeKeno Hub - CUSTOM UI EDITION (FINAL)
+    Game: Blox Fruits (First, Second, Third Sea)
+    Layout: Dark neon / glassmorphism
+    Compatível: PC, Mobile (vertical/horizontal) e Tablet
     ========================================================================
 --]]
 
@@ -43,7 +44,7 @@ local IS_MOBILE  = UserInputService.TouchEnabled and not UserInputService.Keyboa
 local IS_TABLET  = IS_MOBILE and Camera.ViewportSize.X >= 900
 
 -- =========================================================================
--- PALETA DE CORES (baseada nas imagens)
+-- PALETA DE CORES
 -- =========================================================================
 local Colors = {
     BgDark        = Color3.fromRGB(8, 12, 20),
@@ -73,6 +74,7 @@ local Settings = {
         Prediction     = 50,
         TeamFilter     = true,
         Smoothness     = 0.25,
+        VisibleCheck   = false,
     },
     Visuals = {
         PlayerOutline      = false,
@@ -92,7 +94,7 @@ local Settings = {
 }
 
 -- =========================================================================
--- HELPER: CRIAR INSTÂNCIA COM PROPRIEDADES
+-- HELPERS
 -- =========================================================================
 local function Create(className, props, children)
     local obj = Instance.new(className)
@@ -118,6 +120,17 @@ local function AddStroke(parent, color, thickness, transparency)
         Parent = parent
     })
 end
+
+-- Ícones em texto (Roblox não renderiza emojis coloridos)
+local Icons = {
+    Home     = "⌂",
+    Settings = "⚙",
+    Profiles = "▤",
+    About    = "ⓘ",
+    Aimbot   = "◎",
+    Visual   = "◉",
+    Other    = "⚙",
+}
 
 -- =========================================================================
 -- SCREEN GUI PRINCIPAL
@@ -154,21 +167,7 @@ local MainFrame = Create("Frame", {
 AddCorner(MainFrame, 12)
 AddStroke(MainFrame, Colors.Accent, 1.5, 0.6)
 
--- UIScale
 local uiScale = Create("UIScale", { Scale = SCALE, Parent = MainFrame })
-
--- Glow externo (simula neon)
-local Glow = Create("ImageLabel", {
-    Name = "Glow",
-    Size = UDim2.new(1, 20, 1, 20),
-    Position = UDim2.new(0, -10, 0, -10),
-    BackgroundTransparency = 1,
-    Image = "rbxassetid://5028857084",
-    ImageColor3 = Colors.Accent,
-    ImageTransparency = 0.85,
-    ZIndex = 0,
-    Parent = MainFrame
-})
 
 -- =========================================================================
 -- HEADER
@@ -182,7 +181,6 @@ local Header = Create("Frame", {
 })
 AddCorner(Header, 12)
 
--- Corrige cantos inferiores
 Create("Frame", {
     Size = UDim2.new(1, 0, 0, 12),
     Position = UDim2.new(0, 0, 1, -12),
@@ -191,7 +189,6 @@ Create("Frame", {
     Parent = Header
 })
 
--- Logo "Z"
 local LogoBox = Create("Frame", {
     Size = UDim2.new(0, 42, 0, 42),
     Position = UDim2.new(0, 15, 0.5, 0),
@@ -213,7 +210,6 @@ Create("TextLabel", {
     Parent = LogoBox
 })
 
--- Título
 Create("TextLabel", {
     Size = UDim2.new(0, 200, 0, 22),
     Position = UDim2.new(0, 68, 0, 14),
@@ -238,7 +234,6 @@ Create("TextLabel", {
     Parent = Header
 })
 
--- Slogan (canto direito) - esconde em mobile pequeno
 if not IS_MOBILE or IS_TABLET then
     Create("TextLabel", {
         Size = UDim2.new(0, 200, 0, 16),
@@ -264,7 +259,7 @@ if not IS_MOBILE or IS_TABLET then
     })
 end
 
--- Botão fechar (X)
+-- Botão Fechar X
 local CloseBtn = Create("TextButton", {
     Size = UDim2.new(0, 30, 0, 30),
     Position = UDim2.new(1, -42, 0.5, 0),
@@ -276,10 +271,29 @@ local CloseBtn = Create("TextButton", {
     TextSize = 16,
     Font = Enum.Font.GothamBold,
     AutoButtonColor = false,
+    ZIndex = 10,
     Parent = Header
 })
 AddCorner(CloseBtn, 6)
 AddStroke(CloseBtn, Colors.Stroke, 1, 0.4)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
+
+CloseBtn.MouseEnter:Connect(function()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
+        BackgroundColor3 = Colors.Red,
+        TextColor3 = Color3.fromRGB(255, 255, 255)
+    }):Play()
+end)
+
+CloseBtn.MouseLeave:Connect(function()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
+        BackgroundColor3 = Colors.BgCard,
+        TextColor3 = Colors.TextSecondary
+    }):Play()
+end)
 
 -- =========================================================================
 -- ÁREA DE CONTEÚDO
@@ -293,7 +307,7 @@ local ContentArea = Create("Frame", {
 })
 
 -- =========================================================================
--- SIDEBAR (esquerda)
+-- SIDEBAR
 -- =========================================================================
 local SIDEBAR_W = 90
 local Sidebar = Create("Frame", {
@@ -304,12 +318,11 @@ local Sidebar = Create("Frame", {
     Parent = ContentArea
 })
 
--- Menu items da sidebar
 local sidebarItems = {
-    { name = "Home",     icon = "🏠" },
-    { name = "Settings", icon = "⚙" },
-    { name = "Profiles", icon = "📄" },
-    { name = "About",    icon = "ℹ" },
+    { name = "Home",     icon = Icons.Home },
+    { name = "Settings", icon = Icons.Settings },
+    { name = "Profiles", icon = Icons.Profiles },
+    { name = "About",    icon = Icons.About },
 }
 
 local sidebarButtons = {}
@@ -332,7 +345,7 @@ for i, item in ipairs(sidebarItems) do
         Text = item.icon,
         TextColor3 = (i == 1) and Colors.Accent or Colors.TextSecondary,
         TextSize = 20,
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamBold,
         Parent = btn
     })
 
@@ -350,7 +363,7 @@ for i, item in ipairs(sidebarItems) do
     sidebarButtons[item.name] = btn
 end
 
--- System Ready (canto inferior)
+-- Status
 local StatusFrame = Create("Frame", {
     Size = UDim2.new(1, -12, 0, 40),
     Position = UDim2.new(0, 6, 1, -50),
@@ -358,15 +371,14 @@ local StatusFrame = Create("Frame", {
     Parent = Sidebar
 })
 
-Create("Frame", {
+local statusDot = Create("Frame", {
     Size = UDim2.new(0, 8, 0, 8),
     Position = UDim2.new(0, 4, 0, 8),
     BackgroundColor3 = Colors.Green,
     BorderSizePixel = 0,
     Parent = StatusFrame
 })
-local dotCorner = Create("UICorner", { CornerRadius = UDim.new(1, 0) })
-dotCorner.Parent = StatusFrame:GetChildren()[1]
+AddCorner(statusDot, 4)
 
 Create("TextLabel", {
     Size = UDim2.new(1, -16, 0, 14),
@@ -403,9 +415,7 @@ local MainArea = Create("Frame", {
     Parent = ContentArea
 })
 
--- =========================================================================
--- TAB BAR (topo)
--- =========================================================================
+-- Tab Bar
 local TabBar = Create("Frame", {
     Name = "TabBar",
     Size = UDim2.new(1, -20, 0, 44),
@@ -415,16 +425,15 @@ local TabBar = Create("Frame", {
 })
 
 local tabNames = {
-    { name = "AIMBOT", icon = "🎯" },
-    { name = "VISUAL", icon = "👁" },
-    { name = "OTHER",  icon = "⚙" },
+    { name = "AIMBOT", icon = Icons.Aimbot },
+    { name = "VISUAL", icon = Icons.Visual },
+    { name = "OTHER",  icon = Icons.Other },
 }
 
 local tabBtns = {}
 local tabContents = {}
-
 local tabCount = #tabNames
-local tabWidth = (1 / tabCount)
+local tabWidth = 1 / tabCount
 
 for i, tab in ipairs(tabNames) do
     local btn = Create("TextButton", {
@@ -440,7 +449,7 @@ for i, tab in ipairs(tabNames) do
     AddCorner(btn, 8)
     local stroke = AddStroke(btn, (i == 1) and Colors.Accent or Colors.Stroke, 1.5, (i == 1) and 0 or 0.5)
 
-    Create("TextLabel", {
+    local lbl = Create("TextLabel", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
         Text = tab.icon .. "   " .. tab.name,
@@ -450,9 +459,8 @@ for i, tab in ipairs(tabNames) do
         Parent = btn
     })
 
-    tabBtns[tab.name] = { button = btn, stroke = stroke, label = btn:GetChildren()[1] }
+    tabBtns[tab.name] = { button = btn, stroke = stroke, label = lbl }
 
-    -- Container do conteúdo
     local container = Create("Frame", {
         Name = tab.name .. "Content",
         Size = UDim2.new(1, -20, 1, -60),
@@ -464,12 +472,8 @@ for i, tab in ipairs(tabNames) do
     tabContents[tab.name] = container
 end
 
--- =========================================================================
--- FUNÇÃO DE TROCA DE ABA
--- =========================================================================
-local activeTab = "AIMBOT"
+-- Troca de Aba
 local function SwitchTab(tabName)
-    activeTab = tabName
     for name, data in pairs(tabBtns) do
         if name == tabName then
             data.button.BackgroundColor3 = Colors.BgCard
@@ -493,385 +497,3 @@ for name, data in pairs(tabBtns) do
         SwitchTab(name)
     end)
 end
-
--- =========================================================================
--- FÁBRICA DE CARD
--- =========================================================================
-local function MakeCard(parent, size, position)
-    local card = Create("Frame", {
-        Size = size,
-        Position = position,
-        BackgroundColor3 = Colors.BgPanel,
-        BorderSizePixel = 0,
-        Parent = parent
-    })
-    AddCorner(card, 10)
-    AddStroke(card, Colors.Stroke, 1, 0.4)
-    return card
-end
-
--- =========================================================================
--- FÁBRICA DE TOGGLE ROW (nome + descrição + toggle switch)
--- =========================================================================
-local function MakeToggleRow(parent, yOffset, title, desc, initialValue, callback)
-    local row = Create("Frame", {
-        Size = UDim2.new(1, -24, 0, 52),
-        Position = UDim2.new(0, 12, 0, yOffset),
-        BackgroundTransparency = 1,
-        Parent = parent
-    })
-
-    Create("TextLabel", {
-        Size = UDim2.new(1, -60, 0, 16),
-        Position = UDim2.new(0, 0, 0, 6),
-        BackgroundTransparency = 1,
-        Text = title,
-        TextColor3 = Colors.TextPrimary,
-        TextSize = 13,
-        Font = Enum.Font.GothamSemibold,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = row
-    })
-
-    Create("TextLabel", {
-        Size = UDim2.new(1, -60, 0, 14),
-        Position = UDim2.new(0, 0, 0, 24),
-        BackgroundTransparency = 1,
-        Text = desc,
-        TextColor3 = Colors.TextDim,
-        TextSize = 10,
-        Font = Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = row
-    })
-
-    -- Toggle switch
-    local switchBg = Create("Frame", {
-        Size = UDim2.new(0, 42, 0, 22),
-        Position = UDim2.new(1, -42, 0.5, 0),
-        AnchorPoint = Vector2.new(0, 0.5),
-        BackgroundColor3 = initialValue and Colors.ToggleOn or Colors.ToggleOff,
-        BorderSizePixel = 0,
-        Parent = row
-    })
-    AddCorner(switchBg, 11)
-
-    local knob = Create("Frame", {
-        Size = UDim2.new(0, 18, 0, 18),
-        Position = initialValue and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9),
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        BorderSizePixel = 0,
-        Parent = switchBg
-    })
-    AddCorner(knob, 9)
-
-    local switchBtn = Create("TextButton", {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = "",
-        Parent = switchBg
-    })
-
-    local state = initialValue
-    switchBtn.MouseButton1Click:Connect(function()
-        state = not state
-        if state then
-            TweenService:Create(switchBg, TweenInfo.new(0.2), { BackgroundColor3 = Colors.ToggleOn }):Play()
-            TweenService:Create(knob, TweenInfo.new(0.2), {
-                Position = UDim2.new(1, -20, 0.5, -9)
-            }):Play()
-        else
-            TweenService:Create(switchBg, TweenInfo.new(0.2), { BackgroundColor3 = Colors.ToggleOff }):Play()
-            TweenService:Create(knob, TweenInfo.new(0.2), {
-                Position = UDim2.new(0, 2, 0.5, -9)
-            }):Play()
-        end
-        if callback then callback(state) end
-    end)
-
-    return row
-end
-
--- =========================================================================
--- FÁBRICA DE SLIDER ROW
--- =========================================================================
-local function MakeSliderRow(parent, yOffset, title, desc, minVal, maxVal, initialValue, valueName, callback)
-    local row = Create("Frame", {
-        Size = UDim2.new(1, -24, 0, 78),
-        Position = UDim2.new(0, 12, 0, yOffset),
-        BackgroundTransparency = 1,
-        Parent = parent
-    })
-
-    Create("TextLabel", {
-        Size = UDim2.new(1, -100, 0, 16),
-        Position = UDim2.new(0, 0, 0, 4),
-        BackgroundTransparency = 1,
-        Text = title,
-        TextColor3 = Colors.TextPrimary,
-        TextSize = 13,
-        Font = Enum.Font.GothamSemibold,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = row
-    })
-
-    -- Caixa de valor
-    local valueBox = Create("Frame", {
-        Size = UDim2.new(0, 90, 0, 22),
-        Position = UDim2.new(1, -90, 0, 2),
-        BackgroundColor3 = Colors.BgCard,
-        BorderSizePixel = 0,
-        Parent = row
-    })
-    AddCorner(valueBox, 6)
-    AddStroke(valueBox, Colors.Stroke, 1, 0.4)
-
-    local valueLabel = Create("TextLabel", {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = tostring(initialValue) .. " " .. valueName,
-        TextColor3 = Colors.Accent,
-        TextSize = 11,
-        Font = Enum.Font.GothamBold,
-        Parent = valueBox
-    })
-
-    Create("TextLabel", {
-        Size = UDim2.new(1, -60, 0, 14),
-        Position = UDim2.new(0, 0, 0, 22),
-        BackgroundTransparency = 1,
-        Text = desc,
-        TextColor3 = Colors.TextDim,
-        TextSize = 10,
-        Font = Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = row
-    })
-
-    -- Slider bar
-    local sliderBg = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 5),
-        Position = UDim2.new(0, 0, 0, 56),
-        BackgroundColor3 = Colors.ToggleOff,
-        BorderSizePixel = 0,
-        Parent = row
-    })
-    AddCorner(sliderBg, 3)
-
-    local pct = (initialValue - minVal) / (maxVal - minVal)
-    local sliderFill = Create("Frame", {
-        Size = UDim2.new(pct, 0, 1, 0),
-        BackgroundColor3 = Colors.Accent,
-        BorderSizePixel = 0,
-        Parent = sliderBg
-    })
-    AddCorner(sliderFill, 3)
-
-    local knob = Create("Frame", {
-        Size = UDim2.new(0, 14, 0, 14),
-        Position = UDim2.new(pct, -7, 0.5, -7),
-        BackgroundColor3 = Colors.TextPrimary,
-        BorderSizePixel = 0,
-        ZIndex = 2,
-        Parent = sliderBg
-    })
-    AddCorner(knob, 7)
-
-    -- Botão invisível para arrastar
-    local trackBtn = Create("TextButton", {
-        Size = UDim2.new(1, 0, 0, 30),
-        Position = UDim2.new(0, 0, 0.5, -15),
-        BackgroundTransparency = 1,
-        Text = "",
-        Parent = sliderBg
-    })
-
-    local dragging = false
-    local value = initialValue
-
-    local function updateFromInput(input)
-        local relX = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
-        value = math.floor(minVal + relX * (maxVal - minVal) + 0.5)
-        sliderFill.Size = UDim2.new(relX, 0, 1, 0)
-        knob.Position = UDim2.new(relX, -7, 0.5, -7)
-        valueLabel.Text = tostring(value) .. " " .. valueName
-        if callback then callback(value) end
-    end
-
-    trackBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            updateFromInput(input)
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            updateFromInput(input)
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-
-    return row
-end
-
--- =========================================================================
--- FÁBRICA DE CARD WRAPPER (título + seção)
--- =========================================================================
-local function MakeCardSection(parent, title, subtitle, size, position, heightNeeded)
-    local card = MakeCard(parent, size, position)
-
-    -- Header do card
-    Create("TextLabel", {
-        Size = UDim2.new(1, -20, 0, 20),
-        Position = UDim2.new(0, 12, 0, 10),
-        BackgroundTransparency = 1,
-        Text = title,
-        TextColor3 = Colors.TextPrimary,
-        TextSize = 14,
-        Font = Enum.Font.GothamBold,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = card
-    })
-
-    Create("TextLabel", {
-        Size = UDim2.new(1, -20, 0, 14),
-        Position = UDim2.new(0, 12, 0, 28),
-        BackgroundTransparency = 1,
-        Text = subtitle,
-        TextColor3 = Colors.TextDim,
-        TextSize = 10,
-        Font = Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = card
-    })
-
-    -- Container para os rows
-    local rows = Create("Frame", {
-        Size = UDim2.new(1, 0, 1, -46),
-        Position = UDim2.new(0, 0, 0, 46),
-        BackgroundTransparency = 1,
-        Parent = card
-    })
-
-    return card, rows
-end
-
--- =========================================================================
--- PREENCHER ABAS
--- =========================================================================
-
--- ===== ABA AIMBOT =====
-do
-    local tab = tabContents["AIMBOT"]
-    local leftCard, leftRows = MakeCardSection(
-        tab, "🎯  AIMBOT", "Target assistance and smart tracking.",
-        UDim2.new(0.65, -6, 1, 0), UDim2.new(0, 0, 0, 0)
-    )
-
-    local y = 8
-    MakeToggleRow(leftRows, y, "Target Assist", "Auto lock and follow target.",
-        Settings.Aimbot.TargetAssist,
-        function(v) Settings.Aimbot.TargetAssist = v end)
-    y = y + 54
-
-    MakeSliderRow(leftRows, y, "Target Distance", "Range to find targets.",
-        100, 1000, Settings.Aimbot.TargetDistance, "m",
-        function(v) Settings.Aimbot.TargetDistance = v end)
-    y = y + 80
-
-    MakeSliderRow(leftRows, y, "Prediction", "Adjusts target prediction based on movement.",
-        1, 100, Settings.Aimbot.Prediction, "%",
-        function(v) Settings.Aimbot.Prediction = v end)
-    y = y + 80
-
-    MakeToggleRow(leftRows, y, "Team Filter", "Ignore allies and focus on enemies.",
-        Settings.Aimbot.TeamFilter,
-        function(v) Settings.Aimbot.TeamFilter = v end)
-
-    -- Preview panel (direita)
-    local previewCard = MakeCard(tab, UDim2.new(0.35, -6, 1, 0), UDim2.new(0.65, 6, 0, 0))
-
-    local crosshair = Create("Frame", {
-        Size = UDim2.new(0, 130, 0, 130),
-        Position = UDim2.new(0.5, 0, 0.4, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundTransparency = 1,
-        Parent = previewCard
-    })
-
-    -- Círculos de mira
-    for i, s in ipairs({130, 90, 50}) do
-        local c = Create("Frame", {
-            Size = UDim2.new(0, s, 0, s),
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            BackgroundTransparency = 1,
-            Parent = crosshair
-        })
-        AddCorner(c, s / 2)
-        AddStroke(c, Colors.Accent, i == 1 and 1 or 2, 0.5 + (i * 0.1))
-    end
-
-    -- Centro da mira
-    local dot = Create("Frame", {
-        Size = UDim2.new(0, 8, 0, 8),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = Colors.Accent,
-        BorderSizePixel = 0,
-        Parent = crosshair
-    })
-    AddCorner(dot, 4)
-
-    -- Linhas da mira
-    for _, props in ipairs({
-        { UDim2.new(0, 40, 0, 2), UDim2.new(0.5, 20, 0.5, -1) },
-        { UDim2.new(0, 40, 0, 2), UDim2.new(0.5, -60, 0.5, -1) },
-        { UDim2.new(0, 2, 0, 40), UDim2.new(0.5, -1, 0.5, 20) },
-        { UDim2.new(0, 2, 0, 40), UDim2.new(0.5, -1, 0.5, -60) },
-    }) do
-        Create("Frame", {
-            Size = props[1], Position = props[2],
-            BackgroundColor3 = Colors.Accent,
-            BorderSizePixel = 0,
-            Parent = crosshair
-        })
-    end
-
-    Create("TextLabel", {
-        Size = UDim2.new(1, 0, 0, 20),
-        Position = UDim2.new(0, 0, 0.75, 0),
-        BackgroundTransparency = 1,
-        Text = "AIMBOT",
-        TextColor3 = Colors.Accent,
-        TextSize = 16,
-        Font = Enum.Font.GothamBlack,
-        Parent = previewCard
-    })
-
-    Create("TextLabel", {
-        Size = UDim2.new(0.8, 0, 0, 30),
-        Position = UDim2.new(0.1, 0, 0.82, 0),
-        BackgroundTransparency = 1,
-        Text = "Finds the nearest enemy, locks and follows with precision.",
-        TextColor3 = Colors.TextDim,
-        TextSize = 10,
-        Font = Enum.Font.Gotham,
-        TextWrapped = true,
-        Parent = previewCard
-    })
-end
-
--- ===== ABA VISUAL =====
-do
-    local tab = tabContents["VISUAL"]
-    local leftCard, leftRows = MakeCardSection(
-        tab, "👁  VISUAL", "Player information and highlighting.",
-        UDim2.new(0.6, -6, 1, 0), UDim2.new(0, 0, 0, 0)
-    )
