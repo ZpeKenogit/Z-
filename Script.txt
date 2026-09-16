@@ -1,12 +1,22 @@
 --[[
     ========================================================================
-    ZpeKeno Hub - Game Development & Utility Script (Mobile Responsive)
-    ========================================================================
-    Author      : ZpeKeno
-    License     : MIT License
-    Description : Fully responsive Roblox UI Hub with on-screen mobile button.
+    ZpeKeno Hub - Game Development & Utility Script (Game Locked)
     ========================================================================
 --]]
+
+-- ID do jogo permitido
+local ALLOWED_PLACE_ID = 2753915549 -- ID configurado para o seu jogo
+
+if game.PlaceId ~= ALLOWED_PLACE_ID then
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "ZpeKeno Hub",
+            Text = "Erro: Este script nao é compativel com este jogo!",
+            Duration = 6
+        })
+    end)
+    return -- Interrompe a execução se não for o jogo correto
+end
 
 -- Services
 local Players = game:GetService("Players")
@@ -52,9 +62,7 @@ local Window = OrionLib:MakeWindow({
     IntroText = "ZpeKeno Hub"
 })
 
--- =========================================================================
 -- TAB 1: AIMBOT
--- =========================================================================
 local AimbotTab = Window:MakeTab({
     Name = "Aimbot",
     Icon = "rbxassetid://4483345998",
@@ -89,9 +97,7 @@ AimbotTab:AddToggle({
     Callback = function(Value) Settings.Aimbot.TeamFilter = Value end
 })
 
--- =========================================================================
 -- TAB 2: VISUAL
--- =========================================================================
 local VisualTab = Window:MakeTab({
     Name = "Visual",
     Icon = "rbxassetid://4483345998",
@@ -124,9 +130,7 @@ VisualTab:AddToggle({
     Callback = function(Value) Settings.Visuals.ExcludeLocalPlayer = Value end
 })
 
--- =========================================================================
 -- TAB 3: OTHER
--- =========================================================================
 local OtherTab = Window:MakeTab({
     Name = "Other",
     Icon = "rbxassetid://4483345998",
@@ -162,9 +166,7 @@ OtherTab:AddSlider({
     Callback = function(Value) Settings.Other.JumpHeight = Value end
 })
 
--- =========================================================================
 -- MOVEMENT LOGIC
--- =========================================================================
 RunService.RenderStepped:Connect(function()
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         local Humanoid = LocalPlayer.Character.Humanoid
@@ -183,9 +185,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- =========================================================================
--- TOGGLE FUNCTION & MOBILE BUTTON CREATION (BOTÃO Z RESPONSIVO)
--- =========================================================================
+-- TOGGLE FUNCTION & MOBILE BUTTON
 local function ToggleHub()
     local ui = CoreGui:FindFirstChild("Orion") or (LocalPlayer:FindFirstChild("PlayerGui") and LocalPlayer.PlayerGui:FindFirstChild("Orion"))
     if ui then
@@ -193,20 +193,17 @@ local function ToggleHub()
     end
 end
 
--- Keybind Keyboard 'Z'
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.Z then
         ToggleHub()
     end
 end)
 
--- Create On-Screen Mobile Toggle Button
 local function CreateMobileButton()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "ZpeKenoMobileUI"
     ScreenGui.ResetOnSpawn = false
     
-    -- Safe parent check
     pcall(function()
         ScreenGui.Parent = CoreGui
     end)
@@ -227,7 +224,7 @@ local function CreateMobileButton()
     OpenBtn.TextSize = 22
     OpenBtn.Font = Enum.Font.SourceSansBold
     OpenBtn.Active = true
-    OpenBtn.Draggable = true -- Permite arrastar o botão pela tela
+    OpenBtn.Draggable = true
 
     local UICorner = Instance.new("UICorner")
     UICorner.CornerRadius = UDim.new(0, 12)
@@ -243,7 +240,6 @@ local function CreateMobileButton()
     end)
 end
 
--- Scale UI for Mobile Devices
 local function ApplyMobileScaling()
     task.spawn(function()
         task.wait(1)
@@ -254,7 +250,6 @@ local function ApplyMobileScaling()
                 local UIScale = MainFrame:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
                 UIScale.Parent = MainFrame
                 
-                -- Ajusta a escala caso seja mobile (tela pequena)
                 if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
                     UIScale.Scale = 0.75
                 else
