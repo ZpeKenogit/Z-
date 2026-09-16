@@ -1,0 +1,271 @@
+--[[
+    ========================================================================
+    ZpeKeno Hub - Game Development & Utility Script (Mobile Responsive)
+    ========================================================================
+    Author      : ZpeKeno
+    License     : MIT License
+    Description : Fully responsive Roblox UI Hub with on-screen mobile button.
+    ========================================================================
+--]]
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- Load UI Library (Orion Library)
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+
+-- Configuration Storage
+local Settings = {
+    Aimbot = {
+        TargetAssist = false,
+        TargetDistance = 500,
+        Prediction = 50,
+        TeamFilter = true
+    },
+    Visuals = {
+        PlayerOutline = false,
+        HealthPercent = false,
+        Distance = false,
+        ExcludeLocalPlayer = true
+    },
+    Other = {
+        Dash = false,
+        DashPower = 20,
+        MovementSpeed = 16,
+        JumpHeight = 50
+    }
+}
+
+-- Create Main Window
+local Window = OrionLib:MakeWindow({
+    Name = "ZpeKeno | Game Development Hub",
+    HidePremium = true,
+    SaveConfig = true,
+    ConfigFolder = "ZpeKenoConfig",
+    IntroEnabled = true,
+    IntroText = "ZpeKeno Hub"
+})
+
+-- =========================================================================
+-- TAB 1: AIMBOT
+-- =========================================================================
+local AimbotTab = Window:MakeTab({
+    Name = "Aimbot",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+AimbotTab:AddSection({ Name = "AIMBOT - Target assistance and smart tracking" })
+
+AimbotTab:AddToggle({
+    Name = "Target Assist",
+    Default = Settings.Aimbot.TargetAssist,
+    Callback = function(Value) Settings.Aimbot.TargetAssist = Value end
+})
+
+AimbotTab:AddSlider({
+    Name = "Target Distance",
+    Min = 100, Max = 1000, Default = Settings.Aimbot.TargetDistance,
+    Color = Color3.fromRGB(0, 170, 255), Increment = 10, ValueName = "m",
+    Callback = function(Value) Settings.Aimbot.TargetDistance = Value end
+})
+
+AimbotTab:AddSlider({
+    Name = "Prediction",
+    Min = 1, Max = 100, Default = Settings.Aimbot.Prediction,
+    Color = Color3.fromRGB(0, 170, 255), Increment = 1, ValueName = "%",
+    Callback = function(Value) Settings.Aimbot.Prediction = Value end
+})
+
+AimbotTab:AddToggle({
+    Name = "Team Filter",
+    Default = Settings.Aimbot.TeamFilter,
+    Callback = function(Value) Settings.Aimbot.TeamFilter = Value end
+})
+
+-- =========================================================================
+-- TAB 2: VISUAL
+-- =========================================================================
+local VisualTab = Window:MakeTab({
+    Name = "Visual",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+VisualTab:AddSection({ Name = "VISUAL - Player information and highlighting" })
+
+VisualTab:AddToggle({
+    Name = "Player Outline",
+    Default = Settings.Visuals.PlayerOutline,
+    Callback = function(Value) Settings.Visuals.PlayerOutline = Value end
+})
+
+VisualTab:AddToggle({
+    Name = "Health %",
+    Default = Settings.Visuals.HealthPercent,
+    Callback = function(Value) Settings.Visuals.HealthPercent = Value end
+})
+
+VisualTab:AddToggle({
+    Name = "Distance",
+    Default = Settings.Visuals.Distance,
+    Callback = function(Value) Settings.Visuals.Distance = Value end
+})
+
+VisualTab:AddToggle({
+    Name = "Exclude Local Player",
+    Default = Settings.Visuals.ExcludeLocalPlayer,
+    Callback = function(Value) Settings.Visuals.ExcludeLocalPlayer = Value end
+})
+
+-- =========================================================================
+-- TAB 3: OTHER
+-- =========================================================================
+local OtherTab = Window:MakeTab({
+    Name = "Other",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+OtherTab:AddSection({ Name = "OTHER - Character and movement adjustments" })
+
+OtherTab:AddToggle({
+    Name = "Dash",
+    Default = Settings.Other.Dash,
+    Callback = function(Value) Settings.Other.Dash = Value end
+})
+
+OtherTab:AddSlider({
+    Name = "Dash Power",
+    Min = 5, Max = 50, Default = Settings.Other.DashPower,
+    Color = Color3.fromRGB(0, 170, 255), Increment = 1, ValueName = "pwr",
+    Callback = function(Value) Settings.Other.DashPower = Value end
+})
+
+OtherTab:AddSlider({
+    Name = "Movement Speed",
+    Min = 5, Max = 100, Default = Settings.Other.MovementSpeed,
+    Color = Color3.fromRGB(0, 170, 255), Increment = 1, ValueName = "speed",
+    Callback = function(Value) Settings.Other.MovementSpeed = Value end
+})
+
+OtherTab:AddSlider({
+    Name = "Jump Height",
+    Min = 5, Max = 50, Default = Settings.Other.JumpHeight,
+    Color = Color3.fromRGB(0, 170, 255), Increment = 1, ValueName = "height",
+    Callback = function(Value) Settings.Other.JumpHeight = Value end
+})
+
+-- =========================================================================
+-- MOVEMENT LOGIC
+-- =========================================================================
+RunService.RenderStepped:Connect(function()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        local Humanoid = LocalPlayer.Character.Humanoid
+        
+        if Settings.Other.MovementSpeed then
+            Humanoid.WalkSpeed = Settings.Other.MovementSpeed
+        end
+        
+        if Settings.Other.JumpHeight then
+            if Humanoid.UseJumpPower then
+                Humanoid.JumpPower = Settings.Other.JumpHeight
+            else
+                Humanoid.JumpHeight = Settings.Other.JumpHeight
+            end
+        end
+    end
+end)
+
+-- =========================================================================
+-- TOGGLE FUNCTION & MOBILE BUTTON CREATION (BOTÃO Z RESPONSIVO)
+-- =========================================================================
+local function ToggleHub()
+    local ui = CoreGui:FindFirstChild("Orion") or (LocalPlayer:FindFirstChild("PlayerGui") and LocalPlayer.PlayerGui:FindFirstChild("Orion"))
+    if ui then
+        ui.Enabled = not ui.Enabled
+    end
+end
+
+-- Keybind Keyboard 'Z'
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.Z then
+        ToggleHub()
+    end
+end)
+
+-- Create On-Screen Mobile Toggle Button
+local function CreateMobileButton()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "ZpeKenoMobileUI"
+    ScreenGui.ResetOnSpawn = false
+    
+    -- Safe parent check
+    pcall(function()
+        ScreenGui.Parent = CoreGui
+    end)
+    if not ScreenGui.Parent then
+        ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    end
+
+    local OpenBtn = Instance.new("TextButton")
+    OpenBtn.Name = "ToggleZButton"
+    OpenBtn.Parent = ScreenGui
+    OpenBtn.Size = UDim2.new(0, 50, 0, 50)
+    OpenBtn.Position = UDim2.new(0, 15, 0.35, 0)
+    OpenBtn.BackgroundColor3 = Color3.fromRGB(15, 23, 42)
+    OpenBtn.BorderColor3 = Color3.fromRGB(0, 170, 255)
+    OpenBtn.BorderSizePixel = 2
+    OpenBtn.Text = "Z"
+    OpenBtn.TextColor3 = Color3.fromRGB(0, 170, 255)
+    OpenBtn.TextSize = 22
+    OpenBtn.Font = Enum.Font.SourceSansBold
+    OpenBtn.Active = true
+    OpenBtn.Draggable = true -- Permite arrastar o botão pela tela
+
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 12)
+    UICorner.Parent = OpenBtn
+
+    local UIStroke = Instance.new("UIStroke")
+    UIStroke.Parent = OpenBtn
+    UIStroke.Color = Color3.fromRGB(0, 170, 255)
+    UIStroke.Thickness = 1.5
+
+    OpenBtn.MouseButton1Click:Connect(function()
+        ToggleHub()
+    end)
+end
+
+-- Scale UI for Mobile Devices
+local function ApplyMobileScaling()
+    task.spawn(function()
+        task.wait(1)
+        local OrionUI = CoreGui:FindFirstChild("Orion") or LocalPlayer.PlayerGui:FindFirstChild("Orion")
+        if OrionUI then
+            local MainFrame = OrionUI:FindFirstChild("Main", true)
+            if MainFrame then
+                local UIScale = MainFrame:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+                UIScale.Parent = MainFrame
+                
+                -- Ajusta a escala caso seja mobile (tela pequena)
+                if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+                    UIScale.Scale = 0.75
+                else
+                    UIScale.Scale = 1
+                end
+            end
+        end
+    end)
+end
+
+-- Initialize
+CreateMobileButton()
+OrionLib:Init()
+ApplyMobileScaling()
