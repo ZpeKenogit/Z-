@@ -1,18 +1,18 @@
 --[[
     ========================================================================
-    ZpeKeno Hub - Game Development & Utility Script
-    Game: Blox Fruits (Supported in First Sea, Second Sea & Third Sea)
+    ZpeKeno Hub - Custom UI Edition
+    Supported Games: Blox Fruits (Sea 1, Sea 2, Sea 3)
+    Design: Futuristic Dark Blue Cyberpunk Layout
     ========================================================================
 --]]
 
--- Tabela de IDs permitidos para o Blox Fruits (Sea 1, Sea 2 e Sea 3)
+-- Blox Fruits Place IDs
 local ALLOWED_PLACES = {
     [2753915549] = true, -- First Sea
     [4442272183] = true, -- Second Sea
     [7449423635] = true  -- Third Sea
 }
 
--- Verifica se o jogador está em algum dos mares do Blox Fruits
 if not ALLOWED_PLACES[game.PlaceId] then
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -21,17 +21,6 @@ if not ALLOWED_PLACES[game.PlaceId] then
             Duration = 6
         })
     end)
-    return -- Para a execução se não estiver no Blox Fruits
-end
-
--- Tenta carregar a biblioteca de interface (Orion Library)
-local OrionLib
-local success, err = pcall(function()
-    OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/jensonhirst/Orion/main/source'))()
-end)
-
-if not success or not OrionLib then
-    warn("Falha ao carregar Orion Library: " .. tostring(err))
     return
 end
 
@@ -40,250 +29,501 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+local Camera = workspace.CurrentCamera
 
 local LocalPlayer = Players.LocalPlayer
 
--- Configurações Padrão
+-- Global Settings
 local Settings = {
-    Aimbot = {
-        TargetAssist = false,
-        TargetDistance = 500,
-        Prediction = 50,
-        TeamFilter = true
-    },
-    Visuals = {
-        PlayerOutline = false,
-        HealthPercent = false,
-        Distance = false,
-        ExcludeLocalPlayer = true
-    },
-    Other = {
-        Dash = false,
-        DashPower = 20,
-        MovementSpeed = 16,
-        JumpHeight = 50
-    }
+    Aimbot = { TargetAssist = false, TargetDistance = 500, Prediction = 50, TeamFilter = true },
+    Visuals = { PlayerOutline = false, HealthPercent = false, Distance = false, ExcludeLocalPlayer = true },
+    Other = { Dash = false, DashPower = 20, MovementSpeed = 16, JumpHeight = 50 }
 }
 
--- Criar Janela Principal da UI
-local Window = OrionLib:MakeWindow({
-    Name = "ZpeKeno | Game Development Hub",
-    HidePremium = true,
-    SaveConfig = false,
-    IntroEnabled = true,
-    IntroText = "ZpeKeno Hub"
-})
+-- Clean existing UI if re-executed
+if CoreGui:FindFirstChild("ZpeKenoCustomUI") then CoreGui.ZpeKenoCustomUI:Destroy() end
+if LocalPlayer.PlayerGui:FindFirstChild("ZpeKenoCustomUI") then LocalPlayer.PlayerGui.ZpeKenoCustomUI:Destroy() end
 
--- =========================================================================
--- TAB 1: AIMBOT
--- =========================================================================
-local AimbotTab = Window:MakeTab({
-    Name = "Aimbot",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
+-- Screen Gui Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ZpeKenoCustomUI"
+ScreenGui.ResetOnSpawn = false
+pcall(function() ScreenGui.Parent = CoreGui end)
+if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
-AimbotTab:AddSection({ Name = "AIMBOT - Target assistance and smart tracking" })
+-- Colors Palette (Cyber Glow Theme)
+local C_BG = Color3.fromRGB(11, 15, 25)
+local C_PANEL = Color3.fromRGB(15, 23, 38)
+local C_SIDEBAR = Color3.fromRGB(10, 17, 28)
+local C_ACCENT = Color3.fromRGB(0, 170, 255)
+local C_TEXT = Color3.fromRGB(240, 245, 255)
+local C_TEXT_DARK = Color3.fromRGB(100, 116, 139)
+local C_CARD = Color3.fromRGB(20, 30, 48)
 
-AimbotTab:AddToggle({
-    Name = "Target Assist",
-    Default = Settings.Aimbot.TargetAssist,
-    Callback = function(Value) Settings.Aimbot.TargetAssist = Value end
-})
+-- Main Frame (Window)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 680, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -340, 0.5, -210)
+MainFrame.BackgroundColor3 = C_BG
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
 
-AimbotTab:AddSlider({
-    Name = "Target Distance",
-    Min = 100, Max = 1000, Default = Settings.Aimbot.TargetDistance,
-    Color = Color3.fromRGB(0, 170, 255), Increment = 10, ValueName = "m",
-    Callback = function(Value) Settings.Aimbot.TargetDistance = Value end
-})
+local MainCorner = Instance.new("UICorner", MainFrame)
+MainCorner.CornerRadius = UDim.new(0, 10)
 
-AimbotTab:AddSlider({
-    Name = "Prediction",
-    Min = 1, Max = 100, Default = Settings.Aimbot.Prediction,
-    Color = Color3.fromRGB(0, 170, 255), Increment = 1, ValueName = "%",
-    Callback = function(Value) Settings.Aimbot.Prediction = Value end
-})
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Color = C_ACCENT
+MainStroke.Thickness = 1.5
 
-AimbotTab:AddToggle({
-    Name = "Team Filter",
-    Default = Settings.Aimbot.TeamFilter,
-    Callback = function(Value) Settings.Aimbot.TeamFilter = Value end
-})
-
--- =========================================================================
--- TAB 2: VISUAL
--- =========================================================================
-local VisualTab = Window:MakeTab({
-    Name = "Visual",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-VisualTab:AddSection({ Name = "VISUAL - Player information and highlighting" })
-
-VisualTab:AddToggle({
-    Name = "Player Outline",
-    Default = Settings.Visuals.PlayerOutline,
-    Callback = function(Value) Settings.Visuals.PlayerOutline = Value end
-})
-
-VisualTab:AddToggle({
-    Name = "Health %",
-    Default = Settings.Visuals.HealthPercent,
-    Callback = function(Value) Settings.Visuals.HealthPercent = Value end
-})
-
-VisualTab:AddToggle({
-    Name = "Distance",
-    Default = Settings.Visuals.Distance,
-    Callback = function(Value) Settings.Visuals.Distance = Value end
-})
-
-VisualTab:AddToggle({
-    Name = "Exclude Local Player",
-    Default = Settings.Visuals.ExcludeLocalPlayer,
-    Callback = function(Value) Settings.Visuals.ExcludeLocalPlayer = Value end
-})
-
--- =========================================================================
--- TAB 3: OTHER
--- =========================================================================
-local OtherTab = Window:MakeTab({
-    Name = "Other",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-OtherTab:AddSection({ Name = "OTHER - Character and movement adjustments" })
-
-OtherTab:AddToggle({
-    Name = "Dash",
-    Default = Settings.Other.Dash,
-    Callback = function(Value) Settings.Other.Dash = Value end
-})
-
-OtherTab:AddSlider({
-    Name = "Dash Power",
-    Min = 5, Max = 50, Default = Settings.Other.DashPower,
-    Color = Color3.fromRGB(0, 170, 255), Increment = 1, ValueName = "pwr",
-    Callback = function(Value) Settings.Other.DashPower = Value end
-})
-
-OtherTab:AddSlider({
-    Name = "Movement Speed",
-    Min = 16, Max = 100, Default = Settings.Other.MovementSpeed,
-    Color = Color3.fromRGB(0, 170, 255), Increment = 1, ValueName = "speed",
-    Callback = function(Value) Settings.Other.MovementSpeed = Value end
-})
-
-OtherTab:AddSlider({
-    Name = "Jump Height",
-    Min = 50, Max = 200, Default = Settings.Other.JumpHeight,
-    Color = Color3.fromRGB(0, 170, 255), Increment = 1, ValueName = "height",
-    Callback = function(Value) Settings.Other.JumpHeight = Value end
-})
-
--- =========================================================================
--- LOGIC LOOPS (Ajustes de Movimentação do Personagem)
--- =========================================================================
-RunService.RenderStepped:Connect(function()
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        local Humanoid = LocalPlayer.Character.Humanoid
-        
-        if Settings.Other.MovementSpeed and Settings.Other.MovementSpeed > 16 then
-            Humanoid.WalkSpeed = Settings.Other.MovementSpeed
-        end
-        
-        if Settings.Other.JumpHeight and Settings.Other.JumpHeight > 50 then
-            if Humanoid.UseJumpPower then
-                Humanoid.JumpPower = Settings.Other.JumpHeight
-            else
-                Humanoid.JumpHeight = Settings.Other.JumpHeight
-            end
-        end
-    end
-end)
-
--- =========================================================================
--- FUNÇÃO TOGGLE & BOTÃO MÓVEL RESPONSIVO
--- =========================================================================
-local function ToggleHub()
-    local ui = CoreGui:FindFirstChild("Orion") or (LocalPlayer:FindFirstChild("PlayerGui") and LocalPlayer.PlayerGui:FindFirstChild("Orion"))
-    if ui then
-        ui.Enabled = not ui.Enabled
+-- UIScale for Responsiveness
+local UIScale = Instance.new("UIScale", MainFrame)
+local function AutoScale()
+    local vp = Camera.ViewportSize
+    if vp.X < 700 or vp.Y < 450 then
+        UIScale.Scale = math.clamp(vp.X / 720, 0.5, 0.85)
+    else
+        UIScale.Scale = 1
     end
 end
+AutoScale()
+Camera:GetPropertyChangedSignal("ViewportSize"):Connect(AutoScale)
 
--- Atalho no teclado (Tecla Z)
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.Z then
-        ToggleHub()
-    end
+-- Top Header
+local Header = Instance.new("Frame", MainFrame)
+Header.Name = "Header"
+Header.Size = UDim2.new(1, 0, 0, 45)
+Header.BackgroundColor3 = C_PANEL
+Header.BorderSizePixel = 0
+
+local HeaderCorner = Instance.new("UICorner", Header)
+HeaderCorner.CornerRadius = UDim.new(0, 10)
+
+local Logo = Instance.new("TextLabel", Header)
+Logo.Text = "Z"
+Logo.Font = Enum.Font.SourceSansBold
+Logo.TextSize = 28
+Logo.TextColor3 = C_ACCENT
+Logo.Size = UDim2.new(0, 40, 1, 0)
+Logo.Position = UDim2.new(0, 10, 0, 0)
+Logo.BackgroundTransparency = 1
+
+local Title = Instance.new("TextLabel", Header)
+Title.Text = "ZpeKeno\n<font size='10' color='rgb(100,116,139)'>GAME DEVELOPMENT HUB</font>"
+Title.RichText = true
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 18
+Title.TextColor3 = C_TEXT
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Size = UDim2.new(0, 200, 1, 0)
+Title.Position = UDim2.new(0, 50, 0, 0)
+Title.BackgroundTransparency = 1
+
+local Subtitle = Instance.new("TextLabel", Header)
+Subtitle.Text = "/ BETTER TOOLS\n/ BIGGER IDEAS"
+Subtitle.Font = Enum.Font.SourceSans
+Subtitle.TextSize = 10
+Subtitle.TextColor3 = C_TEXT_DARK
+Subtitle.TextXAlignment = Enum.TextXAlignment.Right
+Subtitle.Size = UDim2.new(0, 120, 1, 0)
+Subtitle.Position = UDim2.new(1, -170, 0, 0)
+Subtitle.BackgroundTransparency = 1
+
+local CloseBtn = Instance.new("TextButton", Header)
+CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.SourceSansBold
+CloseBtn.TextSize = 18
+CloseBtn.TextColor3 = C_TEXT_DARK
+CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseBtn.Position = UDim2.new(1, -40, 0, 5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(25, 35, 50)
+CloseBtn.BorderSizePixel = 0
+local CloseCorner = Instance.new("UICorner", CloseBtn)
+CloseCorner.CornerRadius = UDim.new(0, 8)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
 end)
 
--- Criar Botão Flutuante 'Z' para Celular / Tablet
-local function CreateMobileButton()
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "ZpeKenoMobileUI"
-    ScreenGui.ResetOnSpawn = false
+-- Sidebar
+local Sidebar = Instance.new("Frame", MainFrame)
+Sidebar.Name = "Sidebar"
+Sidebar.Size = UDim2.new(0, 60, 1, -45)
+Sidebar.Position = UDim2.new(0, 0, 0, 45)
+Sidebar.BackgroundColor3 = C_SIDEBAR
+Sidebar.BorderSizePixel = 0
+
+local SidebarCorner = Instance.new("UICorner", Sidebar)
+SidebarCorner.CornerRadius = UDim.new(0, 10)
+
+-- Sidebar Buttons Generator
+local TabButtons = {}
+local TabFrames = {}
+
+local function CreateSidebarTab(name, iconText, yPos)
+    local btn = Instance.new("TextButton", Sidebar)
+    btn.Size = UDim2.new(1, 0, 0, 50)
+    btn.Position = UDim2.new(0, 0, 0, yPos)
+    btn.BackgroundTransparency = 1
+    btn.Text = iconText .. "\n<font size='10'>" .. name .. "</font>"
+    btn.RichText = true
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 18
+    btn.TextColor3 = C_TEXT_DARK
+
+    return btn
+end
+
+local NavAimbot = CreateSidebarTab("Aimbot", "🎯", 10)
+local NavVisual = CreateSidebarTab("Visual", "👁️", 65)
+local NavOther = CreateSidebarTab("Other", "⚙️", 120)
+
+-- Top Navigation Bar
+local TopNav = Instance.new("Frame", MainFrame)
+TopNav.Size = UDim2.new(1, -70, 0, 40)
+TopNav.Position = UDim2.new(0, 65, 0, 50)
+TopNav.BackgroundTransparency = 1
+
+local TopNavLayout = Instance.new("UIListLayout", TopNav)
+TopNavLayout.FillDirection = Enum.FillDirection.Horizontal
+TopNavLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+TopNavLayout.Padding = UDim.new(0, 10)
+
+local function CreateTopNavBtn(name, icon)
+    local btn = Instance.new("TextButton", TopNav)
+    btn.Size = UDim2.new(0, 180, 1, 0)
+    btn.BackgroundColor3 = C_PANEL
+    btn.Text = icon .. "  " .. name
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 15
+    btn.TextColor3 = C_TEXT_DARK
+    btn.BorderSizePixel = 0
     
-    pcall(function() ScreenGui.Parent = CoreGui end)
-    if not ScreenGui.Parent then
-        ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-    end
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0, 8)
+    
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Color = Color3.fromRGB(30, 45, 70)
+    stroke.Thickness = 1
+    
+    return btn, stroke
+end
 
-    local OpenBtn = Instance.new("TextButton")
-    OpenBtn.Name = "ToggleZButton"
-    OpenBtn.Parent = ScreenGui
-    OpenBtn.Size = UDim2.new(0, 50, 0, 50)
-    OpenBtn.Position = UDim2.new(0, 15, 0.35, 0)
-    OpenBtn.BackgroundColor3 = Color3.fromRGB(15, 23, 42)
-    OpenBtn.BorderColor3 = Color3.fromRGB(0, 170, 255)
-    OpenBtn.BorderSizePixel = 2
-    OpenBtn.Text = "Z"
-    OpenBtn.TextColor3 = Color3.fromRGB(0, 170, 255)
-    OpenBtn.TextSize = 22
-    OpenBtn.Font = Enum.Font.SourceSansBold
-    OpenBtn.Active = true
-    OpenBtn.Draggable = true
+local BtnTab1, Stroke1 = CreateTopNavBtn("AIMBOT", "🎯")
+local BtnTab2, Stroke2 = CreateTopNavBtn("VISUAL", "👁️")
+local BtnTab3, Stroke3 = CreateTopNavBtn("OTHER", "⚙️")
 
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 12)
-    UICorner.Parent = OpenBtn
+-- Container for Pages
+local Container = Instance.new("Frame", MainFrame)
+Container.Size = UDim2.new(1, -75, 1, -100)
+Container.Position = UDim2.new(0, 65, 0, 95)
+Container.BackgroundTransparency = 1
 
-    local UIStroke = Instance.new("UIStroke")
-    UIStroke.Parent = OpenBtn
-    UIStroke.Color = Color3.fromRGB(0, 170, 255)
-    UIStroke.Thickness = 1.5
+local function CreatePageFrame()
+    local page = Instance.new("Frame", Container)
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    return page
+end
 
-    OpenBtn.MouseButton1Click:Connect(function()
-        ToggleHub()
+local PageAimbot = CreatePageFrame()
+local PageVisual = CreatePageFrame()
+local PageOther = CreatePageFrame()
+
+-- Tab Switcher Logic
+local function SwitchTab(target)
+    PageAimbot.Visible = (target == 1)
+    PageVisual.Visible = (target == 2)
+    PageOther.Visible = (target == 3)
+
+    Stroke1.Color = (target == 1) and C_ACCENT or Color3.fromRGB(30, 45, 70)
+    Stroke2.Color = (target == 2) and C_ACCENT or Color3.fromRGB(30, 45, 70)
+    Stroke3.Color = (target == 3) and C_ACCENT or Color3.fromRGB(30, 45, 70)
+
+    BtnTab1.TextColor3 = (target == 1) and C_TEXT or C_TEXT_DARK
+    BtnTab2.TextColor3 = (target == 2) and C_TEXT or C_TEXT_DARK
+    BtnTab3.TextColor3 = (target == 3) and C_TEXT or C_TEXT_DARK
+
+    NavAimbot.TextColor3 = (target == 1) and C_ACCENT or C_TEXT_DARK
+    NavVisual.TextColor3 = (target == 2) and C_ACCENT or C_TEXT_DARK
+    NavOther.TextColor3 = (target == 3) and C_ACCENT or C_TEXT_DARK
+end
+
+BtnTab1.MouseButton1Click:Connect(function() SwitchTab(1) end)
+BtnTab2.MouseButton1Click:Connect(function() SwitchTab(2) end)
+BtnTab3.MouseButton1Click:Connect(function() SwitchTab(3) end)
+NavAimbot.MouseButton1Click:Connect(function() SwitchTab(1) end)
+NavVisual.MouseButton1Click:Connect(function() SwitchTab(2) end)
+NavOther.MouseButton1Click:Connect(function() SwitchTab(3) end)
+
+-- UI Control Helper Functions
+local function CreateToggle(parent, title, desc, defaultVal, callback)
+    local card = Instance.new("Frame", parent)
+    card.Size = UDim2.new(1, 0, 0, 42)
+    card.BackgroundColor3 = C_CARD
+    card.BorderSizePixel = 0
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
+
+    local lbl = Instance.new("TextLabel", card)
+    lbl.Text = "<b>" .. title .. "</b>\n<font size='10' color='rgb(100,116,139)'>" .. desc .. "</font>"
+    lbl.RichText = true
+    lbl.Font = Enum.Font.SourceSans
+    lbl.TextSize = 14
+    lbl.TextColor3 = C_TEXT
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Size = UDim2.new(0.75, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, 0)
+    lbl.BackgroundTransparency = 1
+
+    local toggleBtn = Instance.new("TextButton", card)
+    toggleBtn.Size = UDim2.new(0, 42, 0, 22)
+    toggleBtn.Position = UDim2.new(1, -52, 0.5, -11)
+    toggleBtn.BackgroundColor3 = defaultVal and C_ACCENT or Color3.fromRGB(40, 50, 70)
+    toggleBtn.Text = ""
+    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
+
+    local circle = Instance.new("Frame", toggleBtn)
+    circle.Size = UDim2.new(0, 16, 0, 16)
+    circle.Position = defaultVal and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+    circle.BackgroundColor3 = C_TEXT
+    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+
+    local state = defaultVal
+    toggleBtn.MouseButton1Click:Connect(function()
+        state = not state
+        toggleBtn.BackgroundColor3 = state and C_ACCENT or Color3.fromRGB(40, 50, 70)
+        circle.Position = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+        callback(state)
     end)
 end
 
--- Ajuste de escala para Telas Pequenas (Mobile)
-local function ApplyMobileScaling()
-    task.spawn(function()
-        task.wait(1)
-        local OrionUI = CoreGui:FindFirstChild("Orion") or LocalPlayer.PlayerGui:FindFirstChild("Orion")
-        if OrionUI then
-            local MainFrame = OrionUI:FindFirstChild("Main", true)
-            if MainFrame then
-                local UIScale = MainFrame:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
-                UIScale.Parent = MainFrame
-                
-                if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
-                    UIScale.Scale = 0.75
-                else
-                    UIScale.Scale = 1
-                end
-            end
+local function CreateSlider(parent, title, minVal, maxVal, defaultVal, callback)
+    local card = Instance.new("Frame", parent)
+    card.Size = UDim2.new(1, 0, 0, 50)
+    card.BackgroundColor3 = C_CARD
+    card.BorderSizePixel = 0
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
+
+    local lbl = Instance.new("TextLabel", card)
+    lbl.Text = "<b>" .. title .. "</b>"
+    lbl.RichText = true
+    lbl.Font = Enum.Font.SourceSans
+    lbl.TextSize = 14
+    lbl.TextColor3 = C_TEXT
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Size = UDim2.new(0.5, 0, 0, 20)
+    lbl.Position = UDim2.new(0, 10, 0, 5)
+    lbl.BackgroundTransparency = 1
+
+    local valBox = Instance.new("TextLabel", card)
+    valBox.Text = tostring(defaultVal)
+    valBox.Font = Enum.Font.SourceSansBold
+    valBox.TextSize = 12
+    valBox.TextColor3 = C_ACCENT
+    valBox.Size = UDim2.new(0, 60, 0, 18)
+    valBox.Position = UDim2.new(1, -70, 0, 5)
+    valBox.BackgroundColor3 = Color3.fromRGB(15, 23, 40)
+    Instance.new("UICorner", valBox).CornerRadius = UDim.new(0, 4)
+
+    local sliderBg = Instance.new("TextButton", card)
+    sliderBg.Text = ""
+    sliderBg.Size = UDim2.new(1, -20, 0, 6)
+    sliderBg.Position = UDim2.new(0, 10, 0, 32)
+    sliderBg.BackgroundColor3 = Color3.fromRGB(40, 50, 70)
+    Instance.new("UICorner", sliderBg).CornerRadius = UDim.new(1, 0)
+
+    local fill = Instance.new("Frame", sliderBg)
+    fill.Size = UDim2.new((defaultVal - minVal)/(maxVal - minVal), 0, 1, 0)
+    fill.BackgroundColor3 = C_ACCENT
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+    local dragging = false
+    local function UpdateSlider(input)
+        local pos = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
+        local value = math.floor(minVal + (maxVal - minVal) * pos)
+        fill.Size = UDim2.new(pos, 0, 1, 0)
+        valBox.Text = tostring(value)
+        callback(value)
+    end
+
+    sliderBg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            UpdateSlider(input)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            UpdateSlider(input)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
         end
     end)
 end
 
--- Inicialização
-CreateMobileButton()
-OrionLib:Init()
-ApplyMobileScaling()
+local function BuildCardLayout(parentFrame)
+    local left = Instance.new("Frame", parentFrame)
+    left.Size = UDim2.new(0, 350, 1, 0)
+    left.BackgroundTransparency = 1
+
+    local layout = Instance.new("UIListLayout", left)
+    layout.Padding = UDim.new(0, 8)
+
+    local right = Instance.new("Frame", parentFrame)
+    right.Size = UDim2.new(1, -360, 1, 0)
+    right.Position = UDim2.new(0, 360, 0, 0)
+    right.BackgroundColor3 = C_PANEL
+    Instance.new("UICorner", right).CornerRadius = UDim.new(0, 8)
+
+    return left, right
+end
+
+-- ==================== PAGE 1: AIMBOT ====================
+local LeftAimbot, RightAimbot = BuildCardLayout(PageAimbot)
+
+CreateToggle(LeftAimbot, "Target Assist", "Auto lock and follow target.", Settings.Aimbot.TargetAssist, function(v) Settings.Aimbot.TargetAssist = v end)
+CreateSlider(LeftAimbot, "Target Distance", 100, 1000, Settings.Aimbot.TargetDistance, function(v) Settings.Aimbot.TargetDistance = v end)
+CreateSlider(LeftAimbot, "Prediction", 1, 100, Settings.Aimbot.Prediction, function(v) Settings.Aimbot.Prediction = v end)
+CreateToggle(LeftAimbot, "Team Filter", "Ignore allies and focus on enemies.", Settings.Aimbot.TeamFilter, function(v) Settings.Aimbot.TeamFilter = v end)
+
+local AimIcon = Instance.new("TextLabel", RightAimbot)
+AimIcon.Text = "🎯"
+AimIcon.Size = UDim2.new(1, 0, 0, 100)
+AimIcon.Position = UDim2.new(0, 0, 0.2, 0)
+AimIcon.TextSize = 60
+AimIcon.BackgroundTransparency = 1
+
+local AimText = Instance.new("TextLabel", RightAimbot)
+AimText.Text = "<b>AIMBOT</b>\n<font color='rgb(100,116,139)'>Finds the nearest enemy, locks and follows with precision.</font>"
+AimText.RichText = true
+AimText.Font = Enum.Font.SourceSans
+AimText.TextSize = 16
+AimText.TextColor3 = C_TEXT
+AimText.Size = UDim2.new(1, -20, 0, 60)
+AimText.Position = UDim2.new(0, 10, 0.6, 0)
+AimText.BackgroundTransparency = 1
+
+-- ==================== PAGE 2: VISUAL ====================
+local LeftVisual, RightVisual = BuildCardLayout(PageVisual)
+
+CreateToggle(LeftVisual, "Player Outline", "Show outline for valid players.", Settings.Visuals.PlayerOutline, function(v) Settings.Visuals.PlayerOutline = v end)
+CreateToggle(LeftVisual, "Health %", "Display player health percentage.", Settings.Visuals.HealthPercent, function(v) Settings.Visuals.HealthPercent = v end)
+CreateToggle(LeftVisual, "Distance", "Show distance to players.", Settings.Visuals.Distance, function(v) Settings.Visuals.Distance = v end)
+CreateToggle(LeftVisual, "Exclude Local Player", "Don't show your own character.", Settings.Visuals.ExcludeLocalPlayer, function(v) Settings.Visuals.ExcludeLocalPlayer = v end)
+
+local VisIcon = Instance.new("TextLabel", RightVisual)
+VisIcon.Text = "👁️"
+VisIcon.Size = UDim2.new(1, 0, 0, 100)
+VisIcon.Position = UDim2.new(0, 0, 0.2, 0)
+VisIcon.TextSize = 60
+VisIcon.BackgroundTransparency = 1
+
+local VisText = Instance.new("TextLabel", RightVisual)
+VisText.Text = "<b>VISUAL</b>\n<font color='rgb(100,116,139)'>See your enemies with health and distance information.</font>"
+VisText.RichText = true
+VisText.Font = Enum.Font.SourceSans
+VisText.TextSize = 16
+VisText.TextColor3 = C_TEXT
+VisText.Size = UDim2.new(1, -20, 0, 60)
+VisText.Position = UDim2.new(0, 10, 0.6, 0)
+VisText.BackgroundTransparency = 1
+
+-- ==================== PAGE 3: OTHER ====================
+local LeftOther, RightOther = BuildCardLayout(PageOther)
+
+CreateToggle(LeftOther, "Dash", "Increase dash distance/speed.", Settings.Other.Dash, function(v) Settings.Other.Dash = v end)
+CreateSlider(LeftOther, "Movement Speed", 16, 100, Settings.Other.MovementSpeed, function(v) Settings.Other.MovementSpeed = v end)
+CreateSlider(LeftOther, "Jump Height", 50, 200, Settings.Other.JumpHeight, function(v) Settings.Other.JumpHeight = v end)
+
+local OthIcon = Instance.new("TextLabel", RightOther)
+OthIcon.Text = "⚡"
+OthIcon.Size = UDim2.new(1, 0, 0, 100)
+OthIcon.Position = UDim2.new(0, 0, 0.2, 0)
+OthIcon.TextSize = 60
+OthIcon.BackgroundTransparency = 1
+
+local OthText = Instance.new("TextLabel", RightOther)
+OthText.Text = "<b>OTHER</b>\n<font color='rgb(100,116,139)'>Move faster, jump higher and customize your character.</font>"
+OthText.RichText = true
+OthText.Font = Enum.Font.SourceSans
+OthText.TextSize = 16
+OthText.TextColor3 = C_TEXT
+OthText.Size = UDim2.new(1, -20, 0, 60)
+OthText.Position = UDim2.new(0, 10, 0.6, 0)
+OthText.BackgroundTransparency = 1
+
+-- Open default tab
+SwitchTab(1)
+
+-- ==================== MOBILE FLOATING BUTTON 'Z' ====================
+local MobileBtn = Instance.new("TextButton", ScreenGui)
+MobileBtn.Name = "ZpeKenoButtonZ"
+MobileBtn.Size = UDim2.new(0, 48, 0, 48)
+MobileBtn.Position = UDim2.new(0, 15, 0.35, 0)
+MobileBtn.BackgroundColor3 = C_BG
+MobileBtn.Text = "Z"
+MobileBtn.TextColor3 = C_ACCENT
+MobileBtn.Font = Enum.Font.SourceSansBold
+MobileBtn.TextSize = 24
+MobileBtn.Active = true
+MobileBtn.Draggable = true
+
+local BtnCorner = Instance.new("UICorner", MobileBtn)
+BtnCorner.CornerRadius = UDim.new(0, 12)
+
+local BtnStroke = Instance.new("UIStroke", MobileBtn)
+BtnStroke.Color = C_ACCENT
+BtnStroke.Thickness = 1.5
+
+MobileBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.Z then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+-- ==================== FUNCTIONAL FEATURES ENGINE ====================
+
+-- Highlights & ESP Storage
+local Highlights = {}
+
+local function ClearVisuals()
+    for _, h in pairs(Highlights) do
+        if h then h:Destroy() end
+    end
+    Highlights = {}
+end
+
+-- ESP & Logic Loop
+RunService.RenderStepped:Connect(function()
+    -- Movement Loops
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        local hum = LocalPlayer.Character.Humanoid
+        if Settings.Other.MovementSpeed > 16 then hum.WalkSpeed = Settings.Other.MovementSpeed end
+        if Settings.Other.JumpHeight > 50 then
+            if hum.UseJumpPower then hum.JumpPower = Settings.Other.JumpHeight else hum.JumpHeight = Settings.Other.JumpHeight end
+        end
+    end
+
+    -- Visual Highlights Engine
+    if Settings.Visuals.PlayerOutline then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer or not Settings.Visuals.ExcludeLocalPlayer then
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    if not Highlights[player] or not Highlights[player].Parent then
+                        local hl = Instance.new("Highlight")
+                        hl.Name = "ZpeKenoESP"
+                        hl.FillColor = Color3.fromRGB(0, 255, 120)
+                        
