@@ -1,13 +1,19 @@
 --[[
     ========================================================================
-    ZpeKeno Hub - Blox Fruits
+    ZpeKeno Hub - Game Development & Utility Script
+    Game: Blox Fruits (Supported in First Sea, Second Sea & Third Sea)
     ========================================================================
 --]]
 
--- Trava de jogo (Blox Fruits: 2753915549)
-local ALLOWED_PLACE_ID = 2753915549
+-- Tabela de IDs permitidos para o Blox Fruits (Sea 1, Sea 2 e Sea 3)
+local ALLOWED_PLACES = {
+    [2753915549] = true, -- First Sea
+    [4442272183] = true, -- Second Sea
+    [7449423635] = true  -- Third Sea
+}
 
-if game.PlaceId ~= ALLOWED_PLACE_ID then
+-- Verifica se o jogador está em algum dos mares do Blox Fruits
+if not ALLOWED_PLACES[game.PlaceId] then
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
             Title = "ZpeKeno Hub",
@@ -15,10 +21,10 @@ if game.PlaceId ~= ALLOWED_PLACE_ID then
             Duration = 6
         })
     end)
-    return
+    return -- Para a execução se não estiver no Blox Fruits
 end
 
--- Tenta carregar a biblioteca de interface
+-- Tenta carregar a biblioteca de interface (Orion Library)
 local OrionLib
 local success, err = pcall(function()
     OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/jensonhirst/Orion/main/source'))()
@@ -37,14 +43,29 @@ local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Configurações padrão
+-- Configurações Padrão
 local Settings = {
-    Aimbot = { TargetAssist = false, TargetDistance = 500, Prediction = 50, TeamFilter = true },
-    Visuals = { PlayerOutline = false, HealthPercent = false, Distance = false, ExcludeLocalPlayer = true },
-    Other = { Dash = false, DashPower = 20, MovementSpeed = 16, JumpHeight = 50 }
+    Aimbot = {
+        TargetAssist = false,
+        TargetDistance = 500,
+        Prediction = 50,
+        TeamFilter = true
+    },
+    Visuals = {
+        PlayerOutline = false,
+        HealthPercent = false,
+        Distance = false,
+        ExcludeLocalPlayer = true
+    },
+    Other = {
+        Dash = false,
+        DashPower = 20,
+        MovementSpeed = 16,
+        JumpHeight = 50
+    }
 }
 
--- Criar Janela Principal
+-- Criar Janela Principal da UI
 local Window = OrionLib:MakeWindow({
     Name = "ZpeKeno | Game Development Hub",
     HidePremium = true,
@@ -53,8 +74,15 @@ local Window = OrionLib:MakeWindow({
     IntroText = "ZpeKeno Hub"
 })
 
--- ABA 1: AIMBOT
-local AimbotTab = Window:MakeTab({ Name = "Aimbot", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+-- =========================================================================
+-- TAB 1: AIMBOT
+-- =========================================================================
+local AimbotTab = Window:MakeTab({
+    Name = "Aimbot",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
 AimbotTab:AddSection({ Name = "AIMBOT - Target assistance and smart tracking" })
 
 AimbotTab:AddToggle({
@@ -83,8 +111,15 @@ AimbotTab:AddToggle({
     Callback = function(Value) Settings.Aimbot.TeamFilter = Value end
 })
 
--- ABA 2: VISUAL
-local VisualTab = Window:MakeTab({ Name = "Visual", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+-- =========================================================================
+-- TAB 2: VISUAL
+-- =========================================================================
+local VisualTab = Window:MakeTab({
+    Name = "Visual",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
 VisualTab:AddSection({ Name = "VISUAL - Player information and highlighting" })
 
 VisualTab:AddToggle({
@@ -111,9 +146,29 @@ VisualTab:AddToggle({
     Callback = function(Value) Settings.Visuals.ExcludeLocalPlayer = Value end
 })
 
--- ABA 3: OTHER
-local OtherTab = Window:MakeTab({ Name = "Other", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+-- =========================================================================
+-- TAB 3: OTHER
+-- =========================================================================
+local OtherTab = Window:MakeTab({
+    Name = "Other",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
 OtherTab:AddSection({ Name = "OTHER - Character and movement adjustments" })
+
+OtherTab:AddToggle({
+    Name = "Dash",
+    Default = Settings.Other.Dash,
+    Callback = function(Value) Settings.Other.Dash = Value end
+})
+
+OtherTab:AddSlider({
+    Name = "Dash Power",
+    Min = 5, Max = 50, Default = Settings.Other.DashPower,
+    Color = Color3.fromRGB(0, 170, 255), Increment = 1, ValueName = "pwr",
+    Callback = function(Value) Settings.Other.DashPower = Value end
+})
 
 OtherTab:AddSlider({
     Name = "Movement Speed",
@@ -129,13 +184,17 @@ OtherTab:AddSlider({
     Callback = function(Value) Settings.Other.JumpHeight = Value end
 })
 
--- Loop de atualização de mobilidade
+-- =========================================================================
+-- LOGIC LOOPS (Ajustes de Movimentação do Personagem)
+-- =========================================================================
 RunService.RenderStepped:Connect(function()
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         local Humanoid = LocalPlayer.Character.Humanoid
+        
         if Settings.Other.MovementSpeed and Settings.Other.MovementSpeed > 16 then
             Humanoid.WalkSpeed = Settings.Other.MovementSpeed
         end
+        
         if Settings.Other.JumpHeight and Settings.Other.JumpHeight > 50 then
             if Humanoid.UseJumpPower then
                 Humanoid.JumpPower = Settings.Other.JumpHeight
@@ -146,7 +205,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Função de alternar exibição
+-- =========================================================================
+-- FUNÇÃO TOGGLE & BOTÃO MÓVEL RESPONSIVO
+-- =========================================================================
 local function ToggleHub()
     local ui = CoreGui:FindFirstChild("Orion") or (LocalPlayer:FindFirstChild("PlayerGui") and LocalPlayer.PlayerGui:FindFirstChild("Orion"))
     if ui then
@@ -154,7 +215,14 @@ local function ToggleHub()
     end
 end
 
--- Botão para Mobile
+-- Atalho no teclado (Tecla Z)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.Z then
+        ToggleHub()
+    end
+end)
+
+-- Criar Botão Flutuante 'Z' para Celular / Tablet
 local function CreateMobileButton()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "ZpeKenoMobileUI"
@@ -184,18 +252,38 @@ local function CreateMobileButton()
     UICorner.CornerRadius = UDim.new(0, 12)
     UICorner.Parent = OpenBtn
 
+    local UIStroke = Instance.new("UIStroke")
+    UIStroke.Parent = OpenBtn
+    UIStroke.Color = Color3.fromRGB(0, 170, 255)
+    UIStroke.Thickness = 1.5
+
     OpenBtn.MouseButton1Click:Connect(function()
         ToggleHub()
     end)
 end
 
--- Tecla 'Z' no teclado
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.Z then
-        ToggleHub()
-    end
-end)
+-- Ajuste de escala para Telas Pequenas (Mobile)
+local function ApplyMobileScaling()
+    task.spawn(function()
+        task.wait(1)
+        local OrionUI = CoreGui:FindFirstChild("Orion") or LocalPlayer.PlayerGui:FindFirstChild("Orion")
+        if OrionUI then
+            local MainFrame = OrionUI:FindFirstChild("Main", true)
+            if MainFrame then
+                local UIScale = MainFrame:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+                UIScale.Parent = MainFrame
+                
+                if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+                    UIScale.Scale = 0.75
+                else
+                    UIScale.Scale = 1
+                end
+            end
+        end
+    end)
+end
 
 -- Inicialização
 CreateMobileButton()
 OrionLib:Init()
+ApplyMobileScaling()
