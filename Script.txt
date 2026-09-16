@@ -1,4 +1,4 @@
--- Blox Fruits Place IDs (Sea 1, Sea 2 e Sea 3)
+-- Verificação de ID dos Mares (Blox Fruits)
 local ALLOWED_PLACES = {
     [2753915549] = true, -- First Sea
     [4442272183] = true, -- Second Sea
@@ -9,21 +9,28 @@ if not ALLOWED_PLACES[game.PlaceId] then
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
             Title = "ZpeKeno Hub",
-            Text = "Erro: Este script so funciona no Blox Fruits!",
-            Duration = 6
+            Text = "Erro: Funciona apenas no Blox Fruits!",
+            Duration = 5
         })
     end)
     return
 end
 
--- Carrega a Orion Library
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+-- Carregamento Seguro da Orion Library
+local success, OrionLib = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source", true))()
+end)
 
--- Janela Principal
+if not success or not OrionLib then
+    warn("Falha ao carregar a Orion Library. Verifique a conexao do executor.")
+    return
+end
+
+-- Criação da Janela Principal
 local Window = OrionLib:MakeWindow({
     Name = "ZpeKeno Hub",
     HidePremium = false,
-    SaveConfig = true,
+    SaveConfig = false,
     ConfigFolder = "ZpeKenoConfig",
     IntroText = "ZpeKeno Hub"
 })
@@ -37,14 +44,14 @@ local Settings = {
     SpeedVal = 16
 }
 
--- ABA: MAIN (Aimbot & Visuals)
+-- ABA PRINCIPAL
 local MainTab = Window:MakeTab({
     Name = "Principal",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-MainTab:AddSection({ Name = "Configurações de Mira" })
+MainTab:AddSection({ Name = "Mira & Visuals" })
 
 MainTab:AddToggle({
     Name = "Target Assist (Aimbot)",
@@ -55,7 +62,7 @@ MainTab:AddToggle({
 })
 
 MainTab:AddSlider({
-    Name = "Distância Máxima",
+    Name = "Distancia Maxima",
     Min = 100,
     Max = 1000,
     Default = 500,
@@ -67,8 +74,6 @@ MainTab:AddSlider({
     end    
 })
 
-MainTab:AddSection({ Name = "Visuals (ESP)" })
-
 MainTab:AddToggle({
     Name = "Player Outline (ESP)",
     Default = false,
@@ -77,14 +82,14 @@ MainTab:AddToggle({
     end    
 })
 
--- ABA: PLAYER (Movimentação)
+-- ABA JOGADOR
 local PlayerTab = Window:MakeTab({
     Name = "Jogador",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-PlayerTab:AddSection({ Name = "Modificadores de Movimento" })
+PlayerTab:AddSection({ Name = "Movimentacao" })
 
 PlayerTab:AddToggle({
     Name = "Ativar SpeedHack",
@@ -107,74 +112,5 @@ PlayerTab:AddSlider({
     end    
 })
 
--- LÓGICA DO SCRIPT
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Camera = workspace.CurrentCamera
-local LocalPlayer = Players.LocalPlayer
-
--- Função para aplicar ESP
-local function ApplyESP(player)
-    if player ~= LocalPlayer and player.Character and not player.Character:FindFirstChild("ZpeKenoESP") then
-        local highlight = Instance.new("Highlight")
-        highlight.Name = "ZpeKenoESP"
-        highlight.FillColor = Color3.fromRGB(0, 255, 120)
-        highlight.OutlineColor = Color3.fromRGB(0, 170, 255)
-        highlight.FillTransparency = 0.5
-        highlight.Parent = player.Character
-    end
-end
-
--- Função para remover ESP
-local function RemoveESP(player)
-    if player.Character and player.Character:FindFirstChild("ZpeKenoESP") then
-        player.Character.ZpeKenoESP:Destroy()
-    end
-end
-
--- Loop de Execução
-RunService.RenderStepped:Connect(function()
-    -- ESP
-    for _, player in pairs(Players:GetPlayers()) do
-        if Settings.ESP then
-            pcall(function() ApplyESP(player) end)
-        else
-            pcall(function() RemoveESP(player) end)
-        end
-    end
-
-    -- SpeedHack
-    if Settings.SpeedHack and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        local moveDir = LocalPlayer.Character.Humanoid.MoveDirection
-        if moveDir.Magnitude > 0 then
-            hrp.CFrame = hrp.CFrame + (moveDir * (Settings.SpeedVal / 50))
-        end
-    end
-
-    -- Aimbot
-    if Settings.Aimbot then
-        local nearestPlayer = nil
-        local shortestDistance = Settings.AimbotDist
-
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            for _, player in pairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    local pos = player.Character.HumanoidRootPart.Position
-                    local dist = (pos - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                    if dist < shortestDistance then
-                        shortestDistance = dist
-                        nearestPlayer = player.Character.HumanoidRootPart
-                    end
-                end
-            end
-
-            if nearestPlayer then
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position, nearestPlayer.Position)
-            end
-        end
-    end
-end)
-
--- Inicializa o Orion
+-- Inicializa a Interface
 OrionLib:Init()
